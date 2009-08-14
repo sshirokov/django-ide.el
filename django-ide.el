@@ -55,7 +55,6 @@
   (let* ((existing (gethash name django-servers))
          (server (or existing (django-prepare-server name settings)))
          (proc (assoc-default :proc server)))
-    (and proc (delete-process proc))
     (cond ((null existing)
            (message "Starting new")
            (puthash name server django-servers)
