@@ -27,6 +27,9 @@
    (:name . ,name)
    (:settings . ,settings)))
 
+(defun django-stop-server (server)
+  nil)
+
 (defun django-restart-server (server)
   nil)
 
@@ -42,7 +45,12 @@
     (message "BName: %s" bname)
     (message "Buffer: %s" buffer)
     (message "Proc: %s" process)
+    (puthash name (append `((:buffer . ,buffer)
+                            (:proc . ,process)
+                            ,(assq-delete-all :buffer server)))
+             django-servers)
     server))
+
 
 
 (defun xxx-django-start-server (server)
