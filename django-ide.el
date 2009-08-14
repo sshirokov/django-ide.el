@@ -23,7 +23,7 @@
     settings))
 
 (defun django-prepare-server (name settings)
-  `((:buffer . :TODO-some-buffer-handle)
+  `((:buffer . nil)
    (:name . ,name)
    (:settings . ,settings)))
 
@@ -50,17 +50,6 @@
                             ,(assq-delete-all :buffer server)))
              django-servers)
     server))
-
-
-
-(defun xxx-django-start-server (server)
-  (let* ((name (concat "*django-server-" (assoc-default :name server) "*"))
-         (buffer (get-buffer-create name)))
-    (shell-command (concat "sleep 300 #django-admin.py runserver 0.0.0.0:8000 0.0.0.0:8000" (assoc-default :settings server) " &") buffer)
-    (puthash name (cons '(:buffer . buffer)
-                        (assq-delete-all :buffer server))
-             django-servers)))
-
 
 (defun django-start-or-restart-server (name settings)
   (let* ((existing (gethash name django-servers))
