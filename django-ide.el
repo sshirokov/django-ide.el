@@ -12,7 +12,7 @@
          (string (if (equal string "") nil string)))
     string))
 
-(defun server-buffer-name (prompt)
+(defun django-server-buffer-name (prompt)
   (let* ((name (and prompt (prompt-string-or-nil "Project name")))
          (name (or name django-default-name)))
     name))
@@ -22,14 +22,33 @@
          (settings (or settings django-default-settings)))
     settings))
 
-(defun start-or-restart-server (name settings)
-  "django-default-server")
+(defun django-prepare-server (name settings)
+  '((:buffer . :TODO-some-buffer-handle)
+   (:name . name)
+   (:settings . settings)))
+
+(defun django-restart-server (server)
+  nil)
+
+(defun django-start-server (server)
+  nil)
+
+(defun django-start-or-restart-server (name settings)
+  (let* ((existing (gethash name django-servers))
+         (server (or existing (django-prepare-server name settings))))
+    (cond ((null existing)
+           (puthash name server django-servers)
+           (django-start-server server))
+          ((null server)
+           server)
+          (t
+           (django-restart-server server)))))
 
 (defun make-django-server (prefix)
   (interactive "P")
-  (let* ((name (server-buffer-name prefix))
+  (let* ((name (django-server-buffer-name prefix))
         (settings (django-settings prefix))
-        (action (let ((result (start-or-restart-server name settings)))
+        (action (let ((result (django-start-or-restart-server name settings)))
                   (cond ((equal result nil) "Failed")
                         ((equal result t) "Restarted")
                         ((stringp result) (concat "Started: " result))))))
