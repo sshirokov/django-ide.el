@@ -23,15 +23,36 @@
     settings))
 
 (defun django-prepare-server (name settings)
-  '((:buffer . :TODO-some-buffer-handle)
-   (:name . name)
-   (:settings . settings)))
+  `((:buffer . :TODO-some-buffer-handle)
+   (:name . ,name)
+   (:settings . ,settings)))
 
 (defun django-restart-server (server)
   nil)
 
 (defun django-start-server (server)
-  nil)
+  (message "Server: %s" server)
+  (message "Given name: %s" (assoc-default :name server))
+  (let* ((name (assoc-default :name server))
+         (settings (assoc-default :settings server))
+         (bname (concat "*django-server-" name "*"))
+         (buffer (get-buffer-create bname))
+         (process (start-process-shell-command bname buffer "django-admin.py" "runserver" "0.0.0.0:8000" (concat "--settings=" settings))))
+    (message "Name: %s" name)
+    (message "BName: %s" bname)
+    (message "Buffer: %s" buffer)
+    (message "Proc: %s" process)
+    server))
+
+
+(defun xxx-django-start-server (server)
+  (let* ((name (concat "*django-server-" (assoc-default :name server) "*"))
+         (buffer (get-buffer-create name)))
+    (shell-command (concat "sleep 300 #django-admin.py runserver 0.0.0.0:8000 0.0.0.0:8000" (assoc-default :settings server) " &") buffer)
+    (puthash name (cons '(:buffer . buffer)
+                        (assq-delete-all :buffer server))
+             django-servers)))
+
 
 (defun django-start-or-restart-server (name settings)
   (let* ((existing (gethash name django-servers))
