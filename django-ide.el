@@ -42,13 +42,25 @@
   (message "Restarting: %s" server)
   (django-start-server (django-stop-server server)))
 
+(defun django-server-running? (server)
+  (and (django-server-buffer server) (django-server-proc server)))
+
+(defun django-stop-all-running-servers ()
+  (let ((stop-if-running (lambda (name server)
+                           (let ((server (or (and (django-server-running? server)
+                                                 (django-stop-server server))
+                                            server)))
+                             (puthash name server django-servers)))))
+    (maphash stop-if-running django-servers)))
+
 (defun django-start-server (server)
+  (django-stop-all-running-servers)
   (let* ((server (django-stop-server server))
          (bname (concat "*django-server-" (django-server-name server) "*"))
          (buffer (get-buffer-create bname))
-         (process (start-process-shell-command bname buffer "django-admin.py" "runserver" "0.0.0.0:8001" (concat "--settings=" settings))))
+         (process (start-process-shell-command bname buffer "django-admin.py" "runserver" "0.0.0.0:8000" (concat "--settings=" settings))))
     (setf (django-server-buffer server) buffer
-          (django-server-proc server) proc)
+          (django-server-proc server) process)
     (puthash name server django-servers)
     (message "Started server: %s" server)
     server))
