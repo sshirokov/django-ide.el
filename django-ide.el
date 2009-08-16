@@ -1,6 +1,11 @@
+(require 'cl)
+
 (defvar django-servers (make-hash-table :test 'equal))
 (defvar django-default-settings (or (getenv "DJANGO_SETTINGS_MODULE") "settings"))
 (defvar django-default-name "default")
+
+(defstruct django-server
+  name settings host port buffer proc)
 
 (defun django-ide-unload-function ()
   "Unload function for django-ide"
@@ -22,41 +27,39 @@
          (settings (or settings django-default-settings)))
     settings))
 
-(defun django-prepare-server (name settings)
-  `((:buffer . nil)
-   (:name . ,name)
-   (:settings . ,settings)))
-
 (defun django-stop-server (server)
-  nil)
+  (message "Stopping: %s" server)
+  (let ((buffer (django-server-buffer server))
+        (proc (django-server-proc server)))
+    (and proc (kill-process proc))
+    (and buffer (kill-buffer buffer))
+    (setf (django-server-buffer server) nil
+          (django-server-proc server) nil)
+    server))
+
 
 (defun django-restart-server (server)
-  nil)
+  (message "Restarting: %s" server)
+  (django-start-server (django-stop-server server)))
 
 (defun django-start-server (server)
-  (message "Server: %s" server)
-  (message "Given name: %s" (assoc-default :name server))
-  (let* ((name (assoc-default :name server))
-         (settings (assoc-default :settings server))
-         (bname (concat "*django-server-" name "*"))
+  (let* ((server (django-stop-server server))
+         (bname (concat "*django-server-" (django-server-name server) "*"))
          (buffer (get-buffer-create bname))
          (process (start-process-shell-command bname buffer "django-admin.py" "runserver" "0.0.0.0:8001" (concat "--settings=" settings))))
-    (message "Name: %s" name)
-    (message "BName: %s" bname)
-    (message "Buffer: %s" buffer)
-    (message "Proc: %s" process)
-    (puthash name (append `((:buffer . ,buffer)
-                            (:proc . ,process)
-                            ,(assq-delete-all :buffer server)))
-             django-servers)
+    (setf (django-server-buffer server) buffer
+          (django-server-proc server) proc)
+    (puthash name server django-servers)
+    (message "Started server: %s" server)
     server))
 
 (defun django-start-or-restart-server (name settings)
+  (message "Making server with :name %s :settings %s" name settings)
   (let* ((existing (gethash name django-servers))
-         (server (or existing (django-prepare-server name settings)))
-         (proc (assoc-default :proc server)))
+         (server (or existing (make-django-server :name name :settings settings)))
+         (proc (django-server-proc server)))
     (cond ((null existing)
-           (message "Starting new")
+           (message "Starting new: %s" server)
            (puthash name server django-servers)
            (django-start-server server))
           ((null server)
@@ -71,9 +74,9 @@
   (let* ((name (django-server-buffer-name prefix))
         (settings (django-settings prefix))
         (action (let ((result (django-start-or-restart-server name settings)))
-                  (cond ((equal result nil) "Failed")
-                        ((equal result t) "Restarted")
-                        ((stringp result) (concat "Started: " result))))))
+                  (cond ((equal result nil) (concat "Failed: %s" name))
+                        ((equal result t) (concat "Restarted: %s" name))
+                        ((django-server-p result) (concat "Started: " name))))))
     (message "%s DEBUG: Name: %s Settings: %s" action name settings)))
 
 
