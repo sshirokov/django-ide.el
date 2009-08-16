@@ -9,16 +9,27 @@
 
 (defun django-ide-unload-function ()
   "Unload function for django-ide"
+  (message "Closing existing servers")
+  (let (
+        (kill-and-close (lambda (name server)
+                          (message "Killing server: %s => %s" name server)
+                          nil)))
+    (maphash kill-and-close django-servers))
   (message "Unloaded django-ide")
   nil)
+
 
 (defun prompt-string-or-nil (prompt &optional completions default)
   (let* ((string (completing-read (concat prompt ": ") completions nil nil default))
          (string (if (equal string "") nil string)))
     string))
 
+(defun django-known-projects ()
+  (list "default"))
+
 (defun django-server-buffer-name (prompt)
-  (let* ((name (and prompt (prompt-string-or-nil "Project name")))
+  (let* ((existing-projects (django-known-projects))
+         (name (and prompt (prompt-string-or-nil "Project name" existing-projects (or (car django-known-projects) "default"))))
          (name (or name django-default-name)))
     name))
 
