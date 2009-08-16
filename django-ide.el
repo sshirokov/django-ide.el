@@ -12,8 +12,8 @@
   (message "Unloaded django-ide")
   nil)
 
-(defun prompt-string-or-nil (prompt)
-  (let* ((string (read-string (concat prompt ": ")))
+(defun prompt-string-or-nil (prompt &optional completions default)
+  (let* ((string (completing-read (concat prompt ": ") completions nil nil default))
          (string (if (equal string "") nil string)))
     string))
 
@@ -81,7 +81,7 @@
            (message "Restarting existing")
            (django-restart-server server)))))
 
-(defun django-make-server (prefix)
+(defun django-spin-server (prefix)
   (interactive "P")
   (let* ((name (django-server-buffer-name prefix))
         (settings (django-settings prefix))
