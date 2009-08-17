@@ -23,6 +23,10 @@
   (message "Unloaded django-ide")
   nil)
 
+(defun django-prompt-change-default-name ()
+  (interactive)
+  (setf django-default-name (or (prompt-string-or-nil "New default name" (django-known-projects) django-default-name)
+                                django-default-name)))
 
 (defun prompt-string-or-nil (prompt &optional completions default)
   (let* ((string (completing-read (concat prompt ": ") completions nil nil default))
@@ -34,7 +38,7 @@
 
 (defun django-server-buffer-name (prompt)
   (let* ((existing-projects (django-known-projects))
-         (name (and prompt (prompt-string-or-nil "Project name" existing-projects (or (car (django-known-projects)) "default"))))
+         (name (and prompt (prompt-string-or-nil "Project name" existing-projects (or (car (django-known-projects)) django-default-name))))
          (name (or name django-default-name)))
     name))
 
