@@ -128,6 +128,7 @@
            (setf console (get-buffer-create bname)
                  proc (start-process-shell-command bname console "django-admin.py" "shell"
                                                    (concat "--settings=" (django-server-settings server)))
+                 (django-server-settings server) settings
                  (django-server-console server) console
                  (django-server-console-proc server) proc)
            (puthash name server django-servers)
@@ -208,7 +209,9 @@
         (t
          (message "Tearing down django-ide-server-mode"))))
 
+;; These should be in a keymap somewhere..
 (global-set-key [(control c) (shift s)] 'django-spin-server)
 (global-set-key [(control c) (shift w)] 'django-switch-to-running-server)
+(global-set-key [(control c) (shift c)] 'django-start-console)
 
 (provide 'django-ide)
