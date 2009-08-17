@@ -26,6 +26,7 @@
   (message "Closing existing servers")
   (let ((kill-and-close (lambda (name server)
                           (message "Killing server: %s => %s" name server)
+                          (and (django-server-console server) (kill-buffer (django-server-console server)))
                           (puthash name (django-stop-server server) django-servers))))
     (maphash kill-and-close django-servers))
   (message "Unloaded django-ide")
