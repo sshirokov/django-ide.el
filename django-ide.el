@@ -149,12 +149,15 @@
     (message "%s DEBUG: Name: %s Settings: %s" action name settings)))
 
 (define-minor-mode django-ide-server-mode "Mode for running django-ide server instances" nil " *Django-Server*"
-  `(("R" . (lambda ()
-             (interactive)
-             (let ((name (assoc-default 'django-project-name (buffer-local-variables (current-buffer)))))
-               (message "Reload: %s" name)
-               (django-restart-server (gethash name django-servers))
-               (django-switch-to-running-server)))))
-  (message "django-ide-server-mode running."))
+  :keymap `(("R" . (lambda ()
+                     (interactive)
+                     (let ((name (assoc-default 'django-project-name (buffer-local-variables (current-buffer)))))
+                       (message "Reload: %s" name)
+                       (django-restart-server (gethash name django-servers))
+                       (django-switch-to-running-server)))))
+  (cond (django-ide-server-mode
+         (message "Setting up django-ide-server-mode"))
+        (t
+         (message "Tearing down django-ide-server-mode"))))
 
 (provide 'django-ide)
