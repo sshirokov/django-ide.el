@@ -113,6 +113,7 @@
                     (make-django-server :name name)))
         (settings (or (and prefix (django-settings prefix))
                       (django-server-settings server)))
+        (bname (format "*django-%s-console*" name))
         (console (django-server-console server))
         (proc (django-server-console-proc server))
         (console-proc-running? (and console proc (equal (process-exit-status proc) 0))))
@@ -121,7 +122,17 @@
            (message "Console is running, switching")
            (switch-to-buffer console))
           (t
-           (message "Console is not running, starting, switching")))
+           (message "Console is not running, starting, switching")
+           (setf console (get-buffer-create bname)
+                 proc (start-process-shell-command bname console "django-admin.py" "shell"
+                                                   (concat "--settings=" (django-server-settings server)))
+                 (django-server-console server) console
+                 (django-server-console-proc server) proc)
+           (puthash name server django-servers)
+           (message "TTY: %s" (process-tty-name proc))
+           (with-current-buffer console
+             (shell-mode))
+           (switch-to-buffer console)))
     (message "Will spawn console for: %s %s" name settings)))
 
 (defun django-log-update-hook (beg end length)
