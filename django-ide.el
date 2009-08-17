@@ -31,8 +31,18 @@
                                 (t nil)))))
     (maphash add-if-running django-servers)
     ;; Should make sure there's not more than one..
-    (message "Running: %s" running)
+    (message "Running server: %s" running)
     (cdar running)))
+
+(defun django-switch-to-running-server (&optional prefix)
+  (interactive "P")
+  (let* ((server (cond ((null prefix)
+                        (django-running-server))
+                       (t
+                        (django-spin-server prefix)
+                        (django-running-server))))
+         (buffer (and server (django-server-buffer server))))
+    (and buffer (switch-to-buffer buffer))))
 
 (defun django-prompt-change-default-name ()
   (interactive)
