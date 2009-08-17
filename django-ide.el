@@ -7,6 +7,12 @@
 (defstruct django-server
   name settings host port buffer proc)
 
+(defun hash-table-keys (hash)
+  (let ((keys nil)
+             (add-key (lambda (k v) (setf keys (cons k keys)))))
+         (maphash add-key hash)
+         keys))
+
 (defun django-ide-unload-function ()
   "Unload function for django-ide"
   (message "Closing existing servers")
@@ -24,11 +30,11 @@
     string))
 
 (defun django-known-projects ()
-  (list "default"))
+  (hash-table-keys django-servers))
 
 (defun django-server-buffer-name (prompt)
   (let* ((existing-projects (django-known-projects))
-         (name (and prompt (prompt-string-or-nil "Project name" existing-projects (or (car django-known-projects) "default"))))
+         (name (and prompt (prompt-string-or-nil "Project name" existing-projects (or (car (django-known-projects)) "default"))))
          (name (or name django-default-name)))
     name))
 
