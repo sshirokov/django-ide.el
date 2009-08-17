@@ -7,11 +7,13 @@
 
 (defstruct django-server
   name
-  settings
+  (settings django-default-settings)
   (host (or (getenv "DJANGO_LISTEN_HOST") "localhost"))
   (port (or (getenv "DJANGO_LISTEN_PORT") 8000))
   buffer
-  proc)
+  proc
+  console
+  console-proc)
 
 (defun hash-table-keys (hash)
   (let ((keys nil)
@@ -103,10 +105,22 @@
                              (puthash name server django-servers)))))
     (maphash stop-if-running django-servers)))
 
-(defun* django-console (&optional prefix &key (name django-default-name) (settings django-default-settings))
+(defun* django-start-console (&optional prefix &key (name django-default-name) (settings django-default-settings))
   (interactive "P")
-  (let ((name (django-server-buffer-name prefix))
-        (settings (django-settings prefix)))
+  (let* ((name (django-server-buffer-name prefix))
+        (server (or (gethash name django-servers)
+                    (make-django-server :name name)))
+        (settings (or (and prefix (django-settings prefix))
+                      (django-server-settings server)))
+        (console (django-server-console server))
+        (proc (django-server-console-proc server))
+        (console-proc-running? (and console proc (equal (process-exit-status proc) 0))))
+
+    (cond (console-proc-running?
+           (message "Console is running, switching")
+           (switch-to-buffer console))
+          (t
+           (message "Console is not running, starting, switching")))
     (message "Will spawn console for: %s %s" name settings)))
 
 (defun django-log-update-hook (beg end length)
