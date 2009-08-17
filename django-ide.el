@@ -72,8 +72,11 @@
   (message "Stopping: %s" server)
   (let ((buffer (django-server-buffer server))
         (proc (django-server-proc server)))
-    (and proc (kill-process proc))
-    (and buffer (kill-buffer buffer))
+    (and buffer proc
+         (progn
+           (and (equal (process-exit-status proc) 0)
+                (kill-process proc))
+           (kill-buffer buffer)))
     (setf (django-server-buffer server) nil
           (django-server-proc server) nil)
     server))
@@ -100,6 +103,8 @@
          (bname (concat "*django-server-" (django-server-name server) "*"))
          (buffer (get-buffer-create bname))
          (process (start-process-shell-command bname buffer "django-admin.py" "runserver" "0.0.0.0:8000" (concat "--settings=" settings))))
+    (with-current-buffer buffer
+        (django-ide-server-mode))
     (setf (django-server-buffer server) buffer
           (django-server-proc server) process)
     (puthash name server django-servers)
@@ -111,6 +116,7 @@
   (let* ((existing (gethash name django-servers))
          (server (or existing (make-django-server :name name :settings settings)))
          (proc (django-server-proc server)))
+    (message "start-or-restart: Server: %s" server)
     (cond ((null existing)
            (message "Starting new: %s" server)
            (puthash name server django-servers)
@@ -132,5 +138,8 @@
                         ((django-server-p result) (concat "Started: " name))))))
     (message "%s DEBUG: Name: %s Settings: %s" action name settings)))
 
+(define-minor-mode django-ide-server-mode "Mode for running django-ide server instances" nil " *Django-Server*"
+  () ; Keymap
+  (message "django-ide-server-mode enabled."))
 
 (provide 'django-ide)
