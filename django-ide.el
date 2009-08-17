@@ -103,6 +103,12 @@
                              (puthash name server django-servers)))))
     (maphash stop-if-running django-servers)))
 
+(defun* django-console (&optional prefix &key (name django-default-name) (settings django-default-settings))
+  (interactive "P")
+  (let ((name (django-server-buffer-name prefix))
+        (settings (django-settings prefix)))
+    (message "Will spawn console for: %s %s" name settings)))
+
 (defun django-log-update-hook (beg end length)
   (let ((text (buffer-substring beg end)))
     (message "Beg(%s) End(%s) Length(%s)" beg end length)
@@ -156,16 +162,25 @@
                         ((django-server-p result) (concat "Started: " name))))))
     (message "%s DEBUG: Name: %s Settings: %s" action name settings)))
 
+(defun django-reload-current-server (&optional prefix)
+  (interactive "P")
+  (let ((name (assoc-default 'django-project-name (buffer-local-variables (current-buffer)))))
+    (message "Reload: %s" name)
+    (django-restart-server (gethash name django-servers))
+    (django-switch-to-running-server)))
+
 (define-minor-mode django-ide-server-mode "Mode for running django-ide server instances" nil " *Django-Server*"
-  :keymap `(("R" . (lambda ()
+  :keymap `(("R" . django-reload-current-server)
+            ("q" . (lambda ()
                      (interactive)
-                     (let ((name (assoc-default 'django-project-name (buffer-local-variables (current-buffer)))))
-                       (message "Reload: %s" name)
-                       (django-restart-server (gethash name django-servers))
-                       (django-switch-to-running-server)))))
+                     (switch-to-buffer nil))))
+
   (cond (django-ide-server-mode
          (message "Setting up django-ide-server-mode"))
         (t
          (message "Tearing down django-ide-server-mode"))))
+
+(global-set-key [(control c) (shift s)] 'django-spin-server)
+(global-set-key [(control c) (shift w)] 'django-switch-to-running-server)
 
 (provide 'django-ide)
