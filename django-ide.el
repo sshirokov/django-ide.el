@@ -10,10 +10,9 @@
 (defun django-ide-unload-function ()
   "Unload function for django-ide"
   (message "Closing existing servers")
-  (let (
-        (kill-and-close (lambda (name server)
+  (let ((kill-and-close (lambda (name server)
                           (message "Killing server: %s => %s" name server)
-                          nil)))
+                          (puthash name (django-stop-server server) django-servers))))
     (maphash kill-and-close django-servers))
   (message "Unloaded django-ide")
   nil)
