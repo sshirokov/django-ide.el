@@ -97,6 +97,12 @@
                              (puthash name server django-servers)))))
     (maphash stop-if-running django-servers)))
 
+(defun django-log-update-hook (beg end length)
+  (let ((text (buffer-substring beg end)))
+    (message "Beg(%s) End(%s) Length(%s)" beg end length)
+    (message "Text: %s" text)
+    nil))
+
 (defun django-start-server (server)
   (django-stop-all-running-servers)
   (let* ((server (django-stop-server server))
@@ -104,6 +110,8 @@
          (buffer (get-buffer-create bname))
          (process (start-process-shell-command bname buffer "django-admin.py" "runserver" "0.0.0.0:8000" (concat "--settings=" (django-server-settings server) ))))
     (with-current-buffer buffer
+      (make-variable-buffer-local 'after-change-functions)
+      (add-hook 'after-change-functions 'django-log-update-hook)
       (make-variable-buffer-local 'django-project-name)
       (setf django-project-name (django-server-name server))
       (django-ide-server-mode))
