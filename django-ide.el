@@ -3,9 +3,15 @@
 (defvar django-servers (make-hash-table :test 'equal))
 (defvar django-default-settings (or (getenv "DJANGO_SETTINGS_MODULE") "settings"))
 (defvar django-default-name "default")
+(defvar django-default-listen-host (or (getenv "DJANGO_LISTEN_HOST") "localhost"))
 
 (defstruct django-server
-  name settings host port buffer proc)
+  name
+  settings
+  (host (or (getenv "DJANGO_LISTEN_HOST") "localhost"))
+  (port (or (getenv "DJANGO_LISTEN_PORT") 8000))
+  buffer
+  proc)
 
 (defun hash-table-keys (hash)
   (let ((keys nil)
@@ -108,7 +114,9 @@
   (let* ((server (django-stop-server server))
          (bname (concat "*django-server-" (django-server-name server) "*"))
          (buffer (get-buffer-create bname))
-         (process (start-process-shell-command bname buffer "django-admin.py" "runserver" "0.0.0.0:8000" (concat "--settings=" (django-server-settings server) ))))
+         (process (start-process-shell-command bname buffer "django-admin.py" "runserver"
+                                               (format "%s:%s" (django-server-host server) (django-server-port server))
+                                               (concat "--settings=" (django-server-settings server) ))))
     (with-current-buffer buffer
       (make-variable-buffer-local 'after-change-functions)
       (add-hook 'after-change-functions 'django-log-update-hook)
