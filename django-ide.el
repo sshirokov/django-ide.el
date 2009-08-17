@@ -9,9 +9,9 @@
 
 (defun hash-table-keys (hash)
   (let ((keys nil)
-             (add-key (lambda (k v) (setf keys (cons k keys)))))
-         (maphash add-key hash)
-         keys))
+        (add-key (lambda (k v) (setf keys (cons k keys)))))
+    (maphash add-key hash)
+    keys))
 
 (defun django-ide-unload-function ()
   "Unload function for django-ide"
