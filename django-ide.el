@@ -23,8 +23,16 @@
   (message "Unloaded django-ide")
   nil)
 
-(defun django-switch-to-server-shell (prompt &optional name)
-  (interactive "P"))
+(defun django-running-server ()
+  (let ((running nil)
+        (add-if-running (lambda (name server)
+                          (cond ((and (django-server-buffer server) (django-server-proc server))
+                                 (setf running (cons `(,name . ,server) running)))
+                                (t nil)))))
+    (maphash add-if-running django-servers)
+    ;; Should make sure there's not more than one..
+    (message "Running: %s" running)
+    (cdar running)))
 
 (defun django-prompt-change-default-name ()
   (interactive)
