@@ -114,9 +114,11 @@
         (settings (or (and prefix (django-settings prefix))
                       (django-server-settings server)))
         (bname (format "*django-%s-console*" name))
-        (console (django-server-console server))
-        (proc (django-server-console-proc server))
-        (console-proc-running? (and console proc (equal (process-exit-status proc) 0))))
+        (console (get-buffer bname))
+        (proc (and console (django-server-console-proc server)))
+        (console-proc-running? (and console proc (not (equal (process-status proc) 'exit)))))
+
+    (message "C(%s) P(%s) R(%s)" console proc console-proc-running?)
 
     (cond (console-proc-running?
            (message "Console is running, switching")
@@ -129,7 +131,7 @@
                  (django-server-console server) console
                  (django-server-console-proc server) proc)
            (puthash name server django-servers)
-           (message "TTY: %s" (process-tty-name proc))
+
            (with-current-buffer console
              (shell-mode))
            (switch-to-buffer console)))
