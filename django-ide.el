@@ -23,6 +23,9 @@
   (message "Unloaded django-ide")
   nil)
 
+(defun django-switch-to-server-shell (prompt &optional name)
+  (interactive "P"))
+
 (defun django-prompt-change-default-name ()
   (interactive)
   (setf django-default-name (or (prompt-string-or-nil "New default name" (django-known-projects) django-default-name)
